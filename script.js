@@ -124,11 +124,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Функция для сброса счетчика
     function resetCounter() {
-        // Проверяем, остались ли попытки
-        if (getPlayCount() > 0) {
-            setPlayCount(3);
-            updateCounter();
+        const today = new Date().toISOString().slice(0, 10);
+        const savedData = localStorage.getItem('playCountData');
+
+        if (savedData) {
+            const data = JSON.parse(savedData);
+            if (data.date !== today) {
+                setPlayCount(3);
+            }
         }
+        else{
+            setPlayCount(3);
+        }
+        updateCounter();
     }
 
     // Функция для планирования сброса счетчика
@@ -159,7 +167,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (count > 0) {
                 // Выполняем действие кнопки
-                // ... ваш код ...
 
                 playButton.disabled = true;
 
@@ -177,3 +184,52 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 while (selectedCells.length < cellsToOpen) {
                     const randomIndex = Math.floor(Math.random() * cells.length);
+                    if (!selectedCells.includes(randomIndex)) {
+                        selectedCells.push(randomIndex);
+                    }
+                }
+
+                let starIndex = 0;
+                function animateStars() {
+                    if (starIndex < selectedCells.length) {
+                        const index = selectedCells[starIndex];
+                        const cell = cells[index];
+
+                        cell.classList.add('cell-fade-out');
+
+                        setTimeout(() => {
+                            cell.innerHTML = '';
+                            const newImg = document.createElement('img');
+                            newImg.setAttribute('width', '40');
+                            newImg.setAttribute('height', '40');
+                            newImg.style.opacity = '0';
+                            newImg.style.transform = 'scale(0)';
+                            newImg.src = 'img/stars.svg';
+                            newImg.classList.add('star-animation');
+                            cell.appendChild(newImg);
+                            setTimeout(() => {
+                                newImg.classList.add('fade-in');
+                            }, 50);
+                            cell.classList.remove('cell-fade-out');
+                        }, 500);
+
+                        starIndex++;
+                        setTimeout(animateStars, 650);
+                    } else {
+                        playButton.disabled = false;
+
+                        if (isFirstPlay) {
+                            isFirstPlay = false;
+                            originalState = cellsBoard.innerHTML;
+                            attachCellClickListeners();
+                        }
+                        setPlayCount(count - 1);
+                        updateCounter();
+                    }
+                }
+                animateStars();
+            }
+        });
+    }
+    attachCellClickListeners();
+});
